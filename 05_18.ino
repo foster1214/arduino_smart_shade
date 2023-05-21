@@ -113,6 +113,12 @@ void callback(char *topic, byte *payload, unsigned int length) {
   } else if (strstr((char *)p, "esc")){
     componentControl("esc");
 
+  } else if (strstr((char*)p, "motor test")){
+    componentTest("motor test");
+  
+  } else if (strstr((char*)p, "led test")){
+    componentTest("led test");
+  
   } else if (strstr((char *)p, "dis")) {
     PPPOS_stop();
     atMode = true;
@@ -332,7 +338,7 @@ void componentCondition(bool condition){
   if (condition == true) {
 
     if(ledStatus == false && forceOn == false){
-      ledControl(ledStatus, forceOn);
+      ledControl(ledStatus);
       ledStatus = true;
     }
 
@@ -361,7 +367,7 @@ void componentCondition(bool condition){
   else if (condition == false) {
 
     if(ledStatus == true && forceOn == false){
-      ledControl(ledStatus, forceOn);
+      ledControl(ledStatus);
       ledStatus = false;
     }
 
@@ -464,7 +470,7 @@ void componentControl(String component) {
       Serial.println("LED is already ON");
     } else if (ledStatus == false) {
       Serial.println("LED ON");
-      ledControl(ledStatus, forceOn);
+      ledControl(ledStatus);
       ledStatus = true;
       forceOn = true;
       client.publish(PUB_TOPIC_FORCE, "LED Force On");  
@@ -478,7 +484,7 @@ void componentControl(String component) {
       Serial.println("LED is already OFF");
     } else if (ledStatus == true) {
       Serial.println("LED OFF");
-      ledControl(ledStatus, forceOn);
+      ledControl(ledStatus);
       ledStatus = false;
       forceOn = true;
       client.publish(PUB_TOPIC_FORCE, "LED Force Off");  
@@ -486,35 +492,46 @@ void componentControl(String component) {
   }
 }
 
-
 // 데이터 수신 시 모터, LED 제어
 // 시리얼 모니터에 1 전송 시 어닝 테스트
 // 시리얼 모니터에 2 전송 시 LED 테스트
-void componentTest() {
-  char ch = Serial.read();
-  if (ch == 49) {
-    Serial.println("MOTOR TEST ON");
+void componentTest(String component) {
+  if (component == "motor test") {
+    client.publish(PUB_TOPIC, "MOTOR TEST ON");
     if(openStatus == true){
       motorControl(openStatus);
       openStatus = false;
+      delay(2500);
       motorControl(openStatus);
       openStatus = true;
       delay(2500);
     } else {
       motorControl(openStatus);
       openStatus = true;
+      delay(2500);
       motorControl(openStatus);
       openStatus = false;
       delay(2500);
     }
-    Serial.println("MOTOR TEST DONE");
-  } else if (ch == 50) {
-    Serial.println("LED TEST ON");
-    ledControl(ledStatus, forceOn);
-    delay(2500);
-    ledControl(ledStatus, forceOn);
-    delay(2500);
-    Serial.println("LED TEST DONE");
+    client.publish(PUB_TOPIC, "MOTOR TEST DONE");
+  } else if (component == "led test") {
+    client.publish(PUB_TOPIC, "LED TEST ON");
+    if(ledStatus == true){
+      ledControl(ledStatus);
+      ledStatus = false;
+      delay(2500);
+      ledControl(ledStatus);
+      ledStatus = true;
+      delay(2500);
+    } else {
+      ledControl(ledStatus);
+      ledStatus = true;
+      delay(2500);
+      ledControl(ledStatus);
+      ledStatus = false;
+      delay(2500);
+    }
+    client.publish(PUB_TOPIC, "LED TEST DONE");
   }
 }
 
@@ -536,11 +553,11 @@ void motorControl(bool openStatus) {
 
 //LED 컨트롤
 //ledStatus 값에 움직임
-void ledControl(bool ledStatus, bool forceOn){
-  if(ledStatus == false && forceOn == false){
+void ledControl(bool ledStatus){
+  if(ledStatus == false){
     digitalWrite(LED_Y, HIGH);
     client.publish(PUB_TOPIC, "LED On");
-  } else if(ledStatus == true && forceOn == false){
+  } else if(ledStatus == true){
     digitalWrite(LED_Y, LOW);
     client.publish(PUB_TOPIC, "LED Off");
   }
