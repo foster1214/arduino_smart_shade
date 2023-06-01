@@ -18,15 +18,15 @@
 #define M1Serial Serial2 // ESP32
 
 char *server = "example.com";
-char *ppp_user = "codezoo";
-char *ppp_pass = "codezoo";
+char *ppp_user = "wsuSmartShade001";
+char *ppp_pass = "wsuSmartShade001";
 String APN = "simplio.apn";
-char *SUB_TOPIC = "type1sc/100/control";
-char *PUB_TOPIC = "type1sc/100/status";
-char *PUB_TOPIC_FORCE = "type1sc/100/force_status";
-char *PUB_TOPIC_LIGHT = "type1sc/100/sensors/light";
-char *PUB_TOPIC_TEMP = "type1sc/100/sensors/temp";
-char *PUB_TOPIC_WIND = "type1sc/100/sensors/wind";
+char *SUB_TOPIC = "type1sc/001/control";
+char *PUB_TOPIC = "type1sc/001/status";
+char *PUB_TOPIC_FORCE = "type1sc/001/force_status";
+char *PUB_TOPIC_LIGHT = "type1sc/001/sensors/light";
+char *PUB_TOPIC_TEMP = "type1sc/001/sensors/temp";
+char *PUB_TOPIC_WIND = "type1sc/001/sensors/wind";
 
 #define MQTT_SERVER "broker.hivemq.com"
 String buffer = "";
@@ -153,7 +153,7 @@ void reconnect() {
   while (!client.connected()) {
     DebugSerial.print("Attempting MQTT connection...");
     // Attempt to connect
-    if (client.connect("catm1Client")) {
+    if (client.connect("wsuSmartShade")) {
       DebugSerial.println("connected");
       client.subscribe(SUB_TOPIC);
       // Once connected, publish an announcement...
