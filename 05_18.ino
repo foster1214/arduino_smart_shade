@@ -1,6 +1,7 @@
 #include <PPPOS.h>
 #include <PPPOSClient.h>
 #include <PubSubClient.h>
+#include <Stepper.h>
 
 #include "TYPE1SC.h"
 
@@ -38,6 +39,19 @@ bool atMode = true;
 
 TYPE1SC TYPE1SC(M1Serial, DebugSerial, PWR_PIN, RST_PIN, WAKEUP_PIN);
 
+// #define DHTPIN 15
+// #include "DHT.h"
+// #define DHTTYPE DHT11
+
+const int stepsPerRevolution = 4096;
+
+#define IN1 5
+#define IN2 21
+#define IN3 22
+#define IN4 23
+
+Stepper myStepper(stepsPerRevolution, IN1, IN3, IN2, IN4);
+
 bool openStatus = false;     //어닝 펼쳐짐 여부
 bool ledStatus = false;      //LED 켜짐 여부
 bool weatherStatus = false;  //폭염, 강풍 등 여부
@@ -55,16 +69,6 @@ float tempC = 0;
 //조도 센서
 int Light_Signal = 4;
 int light = 0;
-
-//서보 모터
-int servoPin = 23;
-
-//setting PWM properties
-const int servoChannel = 0;
-const int freq = 50;
-const int resolution = 16;
-
-int deg, duty;
 
 //풍속 센서
 int anemometerPin = 2;
@@ -265,6 +269,7 @@ void setup() {
   wind_timer = millis();
 
   Serial.begin(115200);
+  // dht.begin();
 
   //LED 핀 설정
   //온도 표시
@@ -275,9 +280,8 @@ void setup() {
   //보안등
   pinMode(LED_Y, OUTPUT);
 
-  //SERVO 모터 설정
-  ledcSetup(servoChannel, freq, resolution);
-  ledcAttachPin(servoPin, servoChannel);
+  //스텝모터 속도 설정
+  myStepper.setSpeed(10);
 
 }
 
@@ -539,14 +543,10 @@ void componentTest(String component) {
 //openStatus 값에 움직임
 void motorControl(bool openStatus) {
   if(openStatus == true){
-    for(deg = 0; deg <= 180; deg++){
-      servoWrite(servoChannel, deg);
-    }
+    myStepper.step(stepsPerRevolution);
     client.publish(PUB_TOPIC, "Awning Close");
   } else if(openStatus == false){
-    for(deg = 180; deg >= 0; deg--){
-      servoWrite(servoChannel, deg);
-    }
+    myStepper.step(-stepsPerRevolution);
     client.publish(PUB_TOPIC, "Awning open");
   } 
 }
@@ -561,13 +561,6 @@ void ledControl(bool ledStatus){
     digitalWrite(LED_Y, LOW);
     client.publish(PUB_TOPIC, "LED Off");
   }
-}
-
-//서보모터 값
-void servoWrite(int ch, int deg){
-  duty = map(deg, 0, 180, 1638, 8192);
-  ledcWrite(ch, duty);
-  delay(15);
 }
 
 //센서 값 TOPIC에 PUBLISH
